@@ -225,6 +225,18 @@ export interface EpisodeError {
   at: string;
 }
 
+/** Bir YouTube yüklemesinin kaydı. */
+export interface PublishRecord {
+  videoId: string;
+  url: string;
+  privacy: "private" | "unlisted" | "public";
+  at: string;
+  /** Short için paketteki sırası (1'den); ana videoda yok. */
+  index?: number;
+  /** Küçük resim yüklenemediyse nedeni (yükleme yine başarılıdır). */
+  thumbnailError?: string;
+}
+
 export interface EpisodeState {
   id: string;
   createdAt: string;
@@ -294,6 +306,10 @@ export interface EpisodeState {
   };
   /** Dikey Short (short aşaması): videonun yanındaki dosya, başlık, sahneler ve süre. */
   short?: { path: string; title: string; scenes: string[]; sec: number; at: string; exportId?: string; audit?: RenderAuditSummary; auditRanges?: { id: string; startSec: number; endSec: number }[] };
+  /** Dikey Short'lar (çoklu Short dalı): paketin sırasıyla; `short` ilkiyle aynı. */
+  shorts?: { path: string; title: string; scenes: string[]; sec: number; at: string; index?: number }[];
+  /** YouTube'a yüklemeler (`ys episode publish`): ana video ve Short'lar; yükleme kendiliğinden olmaz. */
+  publish?: { main?: PublishRecord; shorts?: PublishRecord[] };
   /** Render öncesi taslak kontrolü: ortalama puan ve yeniden planlanan sahneler. */
   draftReview?: EpisodeReview & { avg: number; revisedScenes: string[] };
   /**
