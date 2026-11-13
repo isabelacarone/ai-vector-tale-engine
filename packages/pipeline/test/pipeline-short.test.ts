@@ -38,7 +38,7 @@ const PKG = {
   chapters: [],
   tags: [],
   hashtags: [],
-  short: { from: "s2", to: "s2", title: "Short başlığı" },
+  shorts: [{ from: "s2", to: "s2", title: "Short başlığı", hook: "Payoff scene" }],
 };
 
 /** Timeline, render ve paket hazır bölüm (paket ajanı verilen veriyi döndürür). */
@@ -101,6 +101,7 @@ describe("dikey Short", () => {
     const id = await prepared(h, { sfx: false, music: false, captions: false });
     const old = await h.pipeline.load(id);
     delete old.package!.short;
+    delete old.package!.shorts;
     await h.pipeline.save(old);
     const state = await h.pipeline.run(id, { only: "short" });
     const short = render.episode.mock.calls.at(-1)![0].timeline;
@@ -111,6 +112,27 @@ describe("dikey Short", () => {
     const h2 = harness();
     const bare = await prepared(h2, {}, null);
     expect((await h2.pipeline.run(bare, { only: "short" })).short!.title).toBe((await h2.pipeline.load(bare)).input.topic);
+  });
+
+  it("paket birden çok Short seçerse her biri ayrı dosyaya render edilir; ilki eski alanda kalır; biri düşerse sıradaki yine çıkar", async () => {
+    const h = harness();
+    const id = await prepared(h, {}, { ...PKG, shorts: [{ from: "s2", to: "s2", title: "Birinci", hook: "a" }, { from: "s1", to: "s1", title: "İkinci", hook: "b" }, { from: "s1", to: "s2", title: "Üçüncü", hook: "c" }] });
+    render.episode.mockClear();
+    render.episode.mockResolvedValueOnce("ok").mockRejectedValueOnce(new Error("chrome yok")).mockResolvedValueOnce("ok");
+    const state = await h.pipeline.run(id, { only: "short" });
+    expect(render.episode.mock.calls.map((c: any) => c[0].outputPath)).toEqual([join(h.workDir, id, `${id}.short.mp4`), join(h.workDir, id, `${id}.short-2.mp4`), join(h.workDir, id, `${id}.short-3.mp4`)]);
+    expect(state.shorts!.map((s) => [s.index, s.title, s.scenes])).toEqual([[1, "Birinci", ["s2"]], [3, "Üçüncü", ["s1", "s2"]]]);
+    expect(state.short).toEqual(state.shorts![0]);
+    expect(h.logs).toContain("⚠ Short üretilemedi (video hazır): chrome yok");
+    // Eski paket (tek `short`): tek Short, `shorts` da bir öğeli.
+    const legacy = await prepared(h);
+    const old = await h.pipeline.load(legacy);
+    delete old.package!.shorts;
+    old.package!.short = { from: "s2", to: "s2", title: "Eski" };
+    await h.pipeline.save(old);
+    const s2 = await h.pipeline.run(legacy, { only: "short" });
+    expect(s2.shorts).toHaveLength(1);
+    expect(s2.short!.title).toBe("Eski");
   });
 
   it("kapalıysa ya da bölüm zaten dikeyse Short yok; render düşerse bölüm yine hazır; eksik veri hata verir", async () => {

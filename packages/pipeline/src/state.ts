@@ -225,6 +225,27 @@ export interface EpisodeError {
   at: string;
 }
 
+/** Paketin seçtiği Short aralığı: sahneler (dahil), başlık ve neden tek başına ayakta durduğu (İngilizce). */
+export interface ShortPick {
+  from: string;
+  to: string;
+  title: string;
+  hook?: string;
+}
+
+/** Üretilmiş dikey Short: dosya, başlık, sahneler, süre ve paketteki sırası (1'den). */
+export interface ShortOutput {
+  path: string;
+  title: string;
+  scenes: string[];
+  sec: number;
+  at: string;
+  index?: number;
+  exportId?: string;
+  audit?: RenderAuditSummary;
+  auditRanges?: { id: string; startSec: number; endSec: number }[];
+}
+
 export interface EpisodeState {
   id: string;
   createdAt: string;
@@ -288,12 +309,16 @@ export interface EpisodeState {
     thumbnailText: string;
     description: string;
     tags: string[];
-    /** Short'a kesilecek sahne aralığı (dahil) ve başlığı; eski paketlerde yok. */
-    short?: { from: string; to: string; title: string };
+    /** Short'a kesilecek sahne aralığı (dahil) ve başlığı; eski paketlerde yok. Yeni paketlerde `shorts[0]` ile aynı. */
+    short?: ShortPick;
+    /** Short'lara kesilecek 1–3 sahne aralığı, en güçlüsü önce; eski paketlerde yok. */
+    shorts?: ShortPick[];
     at: string;
   };
-  /** Dikey Short (short aşaması): videonun yanındaki dosya, başlık, sahneler ve süre. */
-  short?: { path: string; title: string; scenes: string[]; sec: number; at: string; exportId?: string; audit?: RenderAuditSummary; auditRanges?: { id: string; startSec: number; endSec: number }[] };
+  /** İlk dikey Short (short aşaması): `shorts[0]` ile aynı kayıt; Stüdyo ve denetim bu alandan okur. */
+  short?: ShortOutput;
+  /** Dikey Short'lar (short aşaması), paketin sırasıyla: videonun yanındaki `<id>.short-<n>.mp4` dosyaları. */
+  shorts?: ShortOutput[];
   /** Render öncesi taslak kontrolü: ortalama puan ve yeniden planlanan sahneler. */
   draftReview?: EpisodeReview & { avg: number; revisedScenes: string[] };
   /**
