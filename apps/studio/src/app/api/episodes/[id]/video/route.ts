@@ -55,10 +55,13 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       },
     });
   }
-  // "?short": dikey Short (videonun yanındaki .short.mp4).
-  const short = new URL(req.url).searchParams.has("short");
-  if (short && !state.short) return textResponse(req, msg("api.noShort"), 404);
-  const path = short ? state.short!.path : state.render.path;
+  // "?short": dikey Short (videonun yanındaki .short.mp4); "&n=2" ikinci Short (`<id>.short-2.mp4`).
+  const search = new URL(req.url).searchParams;
+  const short = search.has("short");
+  const n = Math.max(1, Math.floor(Number(search.get("n")) || 1));
+  const shortOut = !short ? undefined : n === 1 ? (state.shorts?.[0] ?? state.short) : state.shorts?.[n - 1];
+  if (short && !shortOut) return textResponse(req, msg("api.noShort"), 404);
+  const path = shortOut ? shortOut.path : state.render.path;
   const info = await stat(path).catch(() => undefined);
   if (!info) return textResponse(req, msg("api.noVideoFile"), 404);
   const { size } = info;
@@ -66,7 +69,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const headers: Record<string, string> = {
     "content-type": "video/mp4",
     "accept-ranges": "bytes",
-    ...(download ? { "content-disposition": `attachment; filename="${id}${short ? ".short" : ""}.mp4"` } : {}),
+    ...(download ? { "content-disposition": `attachment; filename="${id}${short ? (n > 1 ? `.short-${n}` : ".short") : ""}.mp4"` } : {}),
   };
 
   const range = /bytes=(\d*)-(\d*)/.exec(req.headers.get("range") ?? "");

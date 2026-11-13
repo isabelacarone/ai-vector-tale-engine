@@ -269,6 +269,20 @@ describe("OverviewTab", () => {
     expect(screen.queryByLabelText(tr("video.short"))).toBeNull();
   });
 
+  it("birden çok Short: her biri numaralı başlık, oynatıcı ve indirme bağlantısıyla listelenir", () => {
+    const act = vi.fn(async (_action: Record<string, unknown>) => true);
+    const one = { path: "/x/v.short.mp4", title: "Birinci", scenes: ["s2"], sec: 42, at: "t", index: 1 };
+    const two = { path: "/x/v.short-2.mp4", title: "İkinci", scenes: ["s1"], sec: 30, at: "t", index: 2 };
+    const pkg = { title: "Başlık", thumbnailText: "K", description: "D", tags: [], at: "t" };
+    renderIn(<OverviewTab data={makeData(makeState({ render: { path: "/x/v.mp4", at: "t" }, package: pkg, short: one, shorts: [one, two], done: { render: "t", package: "t", short: "t" } }))} act={act} />);
+    expect(screen.getByText(`${tr("video.short")} 1: Birinci`)).toBeTruthy();
+    expect(screen.getByText(`${tr("video.short")} 2: İkinci`)).toBeTruthy();
+    expect(document.querySelector('video[src$="&short"]')).toBeTruthy();
+    expect(document.querySelector('video[src$="&short&n=2"]')).toBeTruthy();
+    expect(document.querySelector('a[href$="&short&download"]')).toBeTruthy();
+    expect(document.querySelector('a[href$="&short&n=2&download"]')).toBeTruthy();
+  });
+
   it("altyazı anahtarı ayarı değiştirir; render yeniden açıldıysa yeniden render düğmesi çıkar", () => {
     const act = vi.fn(async (_action: Record<string, unknown>) => true);
     const done = makeState({ render: { path: "/x/v.mp4", at: "t" }, done: { render: "t" } });

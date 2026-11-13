@@ -121,17 +121,24 @@ export function OverviewTab({ data, busy = false, act }: { data: EpisodeResponse
             )}
           </div>
         )}
-        {src && state.short && (
-          <section className="card flex flex-wrap items-start gap-4 p-4">
-            <video ref={shortVideo} src={`${src}&vshort=${encodeURIComponent(state.short.at)}&short`} controls className="aspect-[9/16] w-48 rounded-lg border border-line bg-black" />
-            <div className="grid gap-2 text-sm">
-              <h3 className="font-semibold">{t("video.short")}</h3>
-              <p className="text-muted">{t("video.short.info", { sec: state.short.sec, scenes: state.short.scenes.join(", ") })}</p>
-              <a className="btn-ghost" href={`${src}&short&download`}>
-                <Download size={16} /> {t("video.download")}
-              </a>
-            </div>
-          </section>
+        {src &&
+          (state.shorts?.length ? state.shorts : state.short ? [state.short] : []).map((short, i) => (
+            <section key={short.path} className="card flex flex-wrap items-start gap-4 p-4">
+              <video
+                ref={i === 0 ? shortVideo : undefined}
+                src={`${src}&vshort=${encodeURIComponent(short.at)}${i === 0 ? "&short" : `&short&n=${i + 1}`}`}
+                controls
+                className="aspect-[9/16] w-48 rounded-lg border border-line bg-black"
+              />
+              <div className="grid gap-2 text-sm">
+                <h3 className="font-semibold">{state.shorts && state.shorts.length > 1 ? `${t("video.short")} ${i + 1}: ${short.title}` : t("video.short")}</h3>
+                <p className="text-muted">{t("video.short.info", { sec: short.sec, scenes: short.scenes.join(", ") })}</p>
+                <a className="btn-ghost" href={`${src}${i === 0 ? "&short" : `&short&n=${i + 1}`}&download`}>
+                  <Download size={16} /> {t("video.download")}
+                </a>
+              </div>
+            </section>
+          )
         )}
         <RenderAuditCard state={state} busy={busy} act={act} onSeek={(seconds) => seekOutput("main", seconds)} />
         <RenderAuditCard state={state} busy={busy} act={act} target="short" onSeek={(seconds) => seekOutput("short", seconds)} />

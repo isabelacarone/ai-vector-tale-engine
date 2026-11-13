@@ -911,6 +911,19 @@ describe("GET /api/episodes/[id]/video", () => {
     const dl = await get("v-short", TR, "?short&download");
     expect(dl.headers.get("content-disposition")).toBe('attachment; filename="v-short.short.mp4"');
     await dl.arrayBuffer();
+    // İkinci Short: &n=2 `shorts[1]`i verir, adı numaralı; olmayan numara 404; n=1 `shorts[0]`.
+    expect((await get("v-short", TR, "?short&n=2")).status).toBe(404);
+    const mp4b = join(root, "video.short-2.mp4");
+    writeFileSync(mp4b, bytes.slice(0, 7));
+    const one = { path: mp4, title: "Kısa", scenes: ["s1"], sec: 30, at: "t", index: 1 };
+    await saveEpisode("v-shorts", { render: { path: join(root, "video.mp4"), at: "t" }, short: one, shorts: [one, { ...one, path: mp4b, title: "İkinci", index: 2 }] });
+    const second = await get("v-shorts", TR, "?short&n=2&download");
+    expect(second.headers.get("content-length")).toBe("7");
+    expect(second.headers.get("content-disposition")).toBe('attachment; filename="v-shorts.short-2.mp4"');
+    await second.arrayBuffer();
+    const first = await get("v-shorts", TR, "?short&n=1");
+    expect(first.headers.get("content-length")).toBe("10");
+    await first.arrayBuffer();
   });
 
   it("Range: baştan, açık uçlu, sondan ve boyutu aşan son", async () => {
