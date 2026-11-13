@@ -14,9 +14,10 @@ import {
   type RefInput,
   type RunOptions,
 } from "@ys/media-gateway";
-import { backfillLibraryIdentities, curateLessons, EpisodePipeline, listLibraryCharacters, loadLessons, saveLessons } from "@ys/pipeline";
+import { backfillLibraryIdentities, curateLessons, EpisodePipeline, listLibraryCharacters, loadChannelProfile, loadLessons, saveLessons } from "@ys/pipeline";
 import { createStoreFromEnv } from "@ys/storage";
 import { bankCommand } from "./bank.ts";
+import { channelCommand } from "./channel.ts";
 import { samplesCommand } from "./styles.ts";
 import { episodeCommand, positive, renderDemo } from "./episode.ts";
 import { surviveBrokenPipe } from "./pipes.ts";
@@ -48,6 +49,8 @@ Komutlar:
   bank add --name "..." --desc "..." --pack <paket> [--line ...] [--role "sunucu"] [--reference "..."]
                                     Konudan bağımsız karakter çizer ve kapıdan geçirir (Claude, ~$0.15–0.35)
   bank mascot <kimlik> --series "Seri" [--remove]   Serinin maskotu: serinin her bölümüne kendiliğinden girer
+  channel [show]                    Kanal profili (settings/channel.json; docs/CHANNEL_PROFILE.md)
+  channel import [dosya]            channel/channel.json dosyasını içe aktarır: persona ajanlara, varsayılanlar episode new'e
 
   episode new --topic "..." [--lang tr] [--minutes 3] [--tier economy] [--budget 10]
               [--clips 0.2] [--style "..."] [--voice id] [--vertical]
@@ -278,11 +281,17 @@ async function main(): Promise<void> {
     return bankCommand({ pipeline, store, print: (l) => console.log(l) }, positionals[1], positionals[2], values);
   }
 
+  if (command === "channel") {
+    const store = createStoreFromEnv(process.env);
+    return channelCommand({ store, print: (l) => console.log(l) }, positionals[1], positionals[2]);
+  }
+
   if (command === "episode" || command === "render-demo") {
     const store = createStoreFromEnv(process.env);
     const log = (m: string) => console.error(m);
     const gateway = new MediaGateway({ providers, store, ledger, log: (m) => log(`  · ${m}`) });
-    const pipeline = new EpisodePipeline({ gateway, store, ledger, workDir: WORK_DIR, log, agentDeps: { log } });
+    const channel = await loadChannelProfile(store);
+    const pipeline = new EpisodePipeline({ gateway, store, ledger, workDir: WORK_DIR, log, agentDeps: { log }, channel });
     if (command === "render-demo") return renderDemo(pipeline, store);
     return episodeCommand(pipeline, positionals[1], positionals[2], {
       ...values,
@@ -297,7 +306,7 @@ async function main(): Promise<void> {
       pick: positionals[3],
       minutes: values.minutes,
       lang: values.lang,
-    });
+    }, channel ?? {});
   }
 
   const tier = BudgetTier.parse(values.tier);

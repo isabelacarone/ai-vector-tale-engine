@@ -1,4 +1,4 @@
-import { LineStyle, STYLE_AUTO, STYLE_CUSTOM, STYLE_PACK_IDS } from "@ys/core";
+import { LineStyle, STYLE_AUTO, STYLE_CUSTOM, STYLE_PACK_IDS, type ChannelProfile } from "@ys/core";
 import { execFile } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -57,11 +57,15 @@ const parseStage = (s: string | undefined): Stage | undefined => {
   return s as Stage;
 };
 
+/** Channel-profile defaults for `episode new`: used only where the matching flag is absent. */
+export type EpisodeDefaults = Pick<ChannelProfile, "lang" | "series" | "stylePack" | "lineStyle" | "voiceId" | "presenter">;
+
 export async function episodeCommand(
   pipeline: EpisodePipeline,
   sub: string | undefined,
   id: string | undefined,
   args: EpisodeArgs,
+  defaults: EpisodeDefaults = {},
 ): Promise<void> {
   switch (sub) {
     case "audit-voice": {
@@ -99,14 +103,14 @@ export async function episodeCommand(
       if (!Number.isFinite(clips) || clips < 0 || clips > 1) throw new Error("--clips 0 ile 1 arasında olmalı");
       const state = await pipeline.create({
         topic: args.topic,
-        lang: args.lang ?? "tr",
+        lang: args.lang ?? defaults.lang ?? "tr",
         targetSec: Math.round(minutes * 60),
         tier: BudgetTier.parse(args.tier ?? "economy"),
         budgetUsd: budget,
         aiClipRatio: clips,
         motionMode: parseMotion(args.motion),
         styleHint: args.style,
-        voiceId: args.voice,
+        voiceId: args.voice ?? defaults.voiceId,
         autoApprove: !args.manual,
         qa: !args.noQa,
         realism: !args.noRealism,
@@ -114,11 +118,11 @@ export async function episodeCommand(
         reverseViews: !args.noReverseViews,
         setDressing: !args.noSetDressing,
         captions: !args.noCaptions,
-        presenter: args.presenter?.trim() || undefined,
+        presenter: args.presenter?.trim() || defaults.presenter,
         bankCast: args.with ? args.with.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
-        lineStyle: args.line ? LineStyle.parse(args.line) : undefined,
-        stylePack: parseStylePack(args.stylePack),
-        series: args.series?.trim() || undefined,
+        lineStyle: args.line ? LineStyle.parse(args.line) : defaults.lineStyle,
+        stylePack: parseStylePack(args.stylePack ?? defaults.stylePack),
+        series: args.series?.trim() || defaults.series,
         width: args.vertical ? 1080 : 1920,
         height: args.vertical ? 1920 : 1080,
         fps: 30,
