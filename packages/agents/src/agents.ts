@@ -22,6 +22,14 @@ export interface EpisodeBrief {
   wordsPerMinute?: number;
   /** Önceki bölümlerin incelemesinden çıkan senaryo kuralları. */
   lessons?: string[];
+  /** Channel persona and tone (channel profile), appended to the story and script instructions. */
+  persona?: string;
+}
+
+/** The channel persona goes at the end of the instruction; it never overrides the writing rules above it. */
+export function personaBlock(persona: string | undefined): string {
+  const text = persona?.trim();
+  return text ? `\nChannel persona and tone (follow it; it never overrides the rules above, the length budget or the facts):\n${text}` : "";
 }
 
 /**
@@ -108,7 +116,7 @@ Rules:
 - Avoid clichés ("in a world", "little did they know", "changed everything forever"), listicles and calls to subscribe.
 - Every beat names one visual set-piece that a simple flat illustration can show.
 - Beat durations must sum to the target duration (±10%).
-- Write title, logline, premise, hook and beat summaries in the episode language (${brief.lang}).
+- Write title, logline, premise, hook and beat summaries in the episode language (${brief.lang}).${personaBlock(brief.persona)}
 ${RESEARCH_POLICY}`,
       prompt: `Topic: ${brief.topic}\nEpisode language: ${brief.lang}\nTarget duration: ${brief.targetSec} seconds\nAudience: ${brief.audience ?? "general"}${researchBlock(brief.research)}`,
     },
@@ -141,7 +149,7 @@ Rules:
 - Open with the story's hook moment, not a greeting. End every scene with a forward pull (a question, a consequence, a "but") that the next scene answers. Use callbacks to earlier details.
 - No filler ("as we all know", "interestingly"), no repetition of the same fact, rhetorical questions at most once per scene, no calls to subscribe.
 - Narration must be speakable: no brackets, emojis, stage directions or URLs. ${NUMBERS_AND_NAMES}
-- visualIntent (English) lists 2–3 concrete visual moments for a simple flat illustration (who is there, what they do, which object matters). location is in English; reuse location names exactly.${lessonsBlock(brief.lessons)}
+- visualIntent (English) lists 2–3 concrete visual moments for a simple flat illustration (who is there, what they do, which object matters). location is in English; reuse location names exactly.${lessonsBlock(brief.lessons)}${personaBlock(brief.persona)}
 ${RESEARCH_POLICY}
 ${SCRIPT_CLAIM_POLICY}`,
       prompt: `Story:\n${JSON.stringify(story, null, 2)}${researchBlock(brief.research)}`,
@@ -171,7 +179,7 @@ Check and fix:
 - Accuracy: remove or soften any claim that is not well established. Never add new facts you are unsure of.
 - Speakability in ${brief.lang}: short sentences, no tongue-twisters. ${NUMBERS_AND_NAMES}
 - Length: keep total narration ≈ ${targetWords} words (±10%).
-Keep scene ids, beatIds and location names unchanged; you may rewrite narration, emotion and visualIntent. notes: the most important problems you fixed, in English, one line each, phrased as general rules a writer should follow next time.${lessonsBlock(brief.lessons)}
+Keep scene ids, beatIds and location names unchanged; you may rewrite narration, emotion and visualIntent. notes: the most important problems you fixed, in English, one line each, phrased as general rules a writer should follow next time.${lessonsBlock(brief.lessons)}${personaBlock(brief.persona)}
 ${RESEARCH_POLICY}
 ${SCRIPT_CLAIM_POLICY}`,
       prompt: `Story:\n${JSON.stringify(story, null, 2)}\n\nDraft script:\n${JSON.stringify(draft, null, 2)}${researchBlock(brief.research)}`,
