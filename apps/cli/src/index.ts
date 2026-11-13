@@ -22,6 +22,7 @@ import { samplesCommand } from "./styles.ts";
 import { episodeCommand, positive, renderDemo } from "./episode.ts";
 import { surviveBrokenPipe } from "./pipes.ts";
 import { doctorCommand } from "./doctor.ts";
+import { publishCommand, youtubeAuthCommand } from "./youtube.ts";
 
 const LEDGER_FILE = ".data/ledger.jsonl";
 const WORK_DIR = ".data/episodes";
@@ -64,6 +65,9 @@ Komutlar:
   episode audit <id>                mevcut videoyu ücretsiz denetle (yeniden render yok)
     episode audit-voice <id>          mevcut konuşma kayıtlarını müzikten bağımsız denetle
   episode compare-style <id>        mevcut videoyu kaydedilmiş referansla karşılaştır
+  episode publish <id> [--short [--n 2]] [--privacy private|unlisted|public]
+                                    YouTube'a yükler (varsayılan private; docs/YOUTUBE_PUBLISHING.md)
+  youtube auth                      YouTube OAuth: onay bağlantısını basar, yenileme anahtarını verir (.env'e elle)
               new için: [--motion animated|mixed|still|vector] [--manual: onaylarda dur] [--no-qa: kare kontrolü kapalı] [--no-realism: gerçeklik denetimi kapalı] [--side-views: yürüyen karakterlere yan görünüş] [--no-reverse-views: odalara ters açı çizilmez] [--no-set-dressing: odalara set eşyası konmaz] [--no-captions: altyazı videoya gömülmez, yalnız .srt] [--line outline|flat|sketch|ink]
               [--series "Seri adı"] [--style-pack auto|custom|<paket>]  (paketler: pnpm ys styles)
               [--presenter <banka kimliği>] [--with <kimlik,kimlik>]  bankadan sunucu/karakter (vektör; bölüm onların stiline geçer)
@@ -156,6 +160,8 @@ async function main(): Promise<void> {
       backfill: { type: "boolean", default: false },
       vertical: { type: "boolean", default: false },
       short: { type: "boolean", default: false },
+      n: { type: "string" },
+      privacy: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
       // "--version" seçenek olarak tanımlı değilse parseArgs "Unknown option" ile düşüyordu.
       version: { type: "boolean", default: false },
@@ -273,6 +279,11 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "youtube") {
+    if (positionals[1] !== "auth") throw new Error("Kullanım: youtube auth");
+    return youtubeAuthCommand({ print: (l) => console.log(l) });
+  }
+
   if (command === "bank") {
     const store = createStoreFromEnv(process.env);
     const log = (m: string) => console.error(m);
@@ -293,6 +304,10 @@ async function main(): Promise<void> {
     const channel = await loadChannelProfile(store);
     const pipeline = new EpisodePipeline({ gateway, store, ledger, workDir: WORK_DIR, log, agentDeps: { log }, channel });
     if (command === "render-demo") return renderDemo(pipeline, store);
+    if (positionals[1] === "publish") {
+      await publishCommand({ pipeline, workDir: WORK_DIR, print: (l) => console.log(l) }, positionals[2], { short: values.short, n: values.n ? Number(values.n) : undefined, privacy: values.privacy });
+      return;
+    }
     return episodeCommand(pipeline, positionals[1], positionals[2], {
       ...values,
       noQa: values["no-qa"],

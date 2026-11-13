@@ -60,6 +60,9 @@ importers:
       '@ys/pipeline':
         specifier: workspace:*
         version: link:../../packages/pipeline
+      '@ys/publisher':
+        specifier: workspace:*
+        version: link:../../packages/publisher
       '@ys/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -244,6 +247,8 @@ importers:
       '@types/topojson-specification':
         specifier: 1.0.5
         version: 1.0.5
+
+  packages/publisher: {}
 
   packages/storage:
     dependencies:

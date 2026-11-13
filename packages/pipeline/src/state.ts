@@ -246,6 +246,18 @@ export interface ShortOutput {
   auditRanges?: { id: string; startSec: number; endSec: number }[];
 }
 
+/** Bir YouTube yüklemesinin kaydı. */
+export interface PublishRecord {
+  videoId: string;
+  url: string;
+  privacy: "private" | "unlisted" | "public";
+  at: string;
+  /** Short için paketteki sırası (1'den); ana videoda yok. */
+  index?: number;
+  /** Küçük resim yüklenemediyse nedeni (yükleme yine başarılıdır). */
+  thumbnailError?: string;
+}
+
 export interface EpisodeState {
   id: string;
   createdAt: string;
@@ -319,6 +331,8 @@ export interface EpisodeState {
   short?: ShortOutput;
   /** Dikey Short'lar (short aşaması), paketin sırasıyla: videonun yanındaki `<id>.short-<n>.mp4` dosyaları. */
   shorts?: ShortOutput[];
+  /** YouTube'a yüklemeler (`ys episode publish`): ana video ve Short'lar; yükleme kendiliğinden olmaz. */
+  publish?: { main?: PublishRecord; shorts?: PublishRecord[] };
   /** Render öncesi taslak kontrolü: ortalama puan ve yeniden planlanan sahneler. */
   draftReview?: EpisodeReview & { avg: number; revisedScenes: string[] };
   /**

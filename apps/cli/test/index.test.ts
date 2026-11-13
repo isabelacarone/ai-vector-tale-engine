@@ -93,6 +93,8 @@ const episodeMod = vi.hoisted(() => ({ episodeCommand: vi.fn(async () => {}), re
 vi.mock("../src/episode.ts", async (orig) => ({ ...(await orig<object>()), ...episodeMod }));
 const doctorMod = vi.hoisted(() => ({ doctorCommand: vi.fn(async (_options: unknown) => 0) }));
 vi.mock("../src/doctor.ts", () => doctorMod);
+const youtubeMod = vi.hoisted(() => ({ youtubeAuthCommand: vi.fn(async (_deps: unknown) => {}), publishCommand: vi.fn(async (_deps: unknown, _id: unknown, _o: unknown) => ({})) }));
+vi.mock("../src/youtube.ts", () => youtubeMod);
 
 const cwd = process.cwd();
 let dir = "";
@@ -284,6 +286,22 @@ describe("episode ve render-demo", () => {
     expect(r.err).toContain("  · ağ geçidi günlüğü");
     expect(r.err).toContain("pipeline günlüğü");
     expect(r.err).toContain("ajan günlüğü");
+  });
+
+  it("episode publish ve youtube auth kendi komutlarına gider; yanlış alt komut hata", async () => {
+    const r = await cli("episode", "publish", "e1", "--short", "--n", "2", "--privacy", "unlisted");
+    expect(r.code).toBe(0);
+    expect(episodeMod.episodeCommand).not.toHaveBeenCalled();
+    const [deps, id, o] = youtubeMod.publishCommand.mock.calls[0] as unknown as [Record<string, unknown>, string, Record<string, unknown>];
+    expect(deps.pipeline).toBeInstanceOf(fake.FakePipeline);
+    expect(deps.workDir).toBe(".data/episodes");
+    expect(id).toBe("e1");
+    expect(o).toEqual({ short: true, n: 2, privacy: "unlisted" });
+    expect((await cli("episode", "publish", "e2")).code).toBe(0);
+    expect((youtubeMod.publishCommand.mock.calls[1] as unknown[])[2]).toEqual({ short: false, n: undefined, privacy: undefined });
+    expect((await cli("youtube", "auth")).code).toBe(0);
+    expect(youtubeMod.youtubeAuthCommand).toHaveBeenCalledTimes(1);
+    expect((await cli("youtube")).fail).toContain("Kullanım: youtube auth");
   });
 
   it("render-demo API'siz demo hattını çalıştırır", async () => {

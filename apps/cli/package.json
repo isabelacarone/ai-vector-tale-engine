@@ -8,6 +8,7 @@
     "@ys/db": "workspace:*",
     "@ys/media-gateway": "workspace:*",
     "@ys/pipeline": "workspace:*",
+    "@ys/publisher": "workspace:*",
     "@ys/storage": "workspace:*"
   }
 }
