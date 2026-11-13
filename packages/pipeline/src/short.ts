@@ -1,4 +1,5 @@
 import type { Timeline } from "@ys/core";
+import type { ShortPick } from "./state.ts";
 
 /**
  * Bölümden dikey Short: ardışık sahnelerden oluşan bir aralık 9:16 olarak yeniden render edilir (API yok). Aralığı
@@ -15,6 +16,20 @@ export const SHORT = {
   width: 1080,
   height: 1920,
 };
+
+/**
+ * Paketten Short seçimleri, en güçlüsü önce: yeni paketlerde `shorts` (1–3), eski paketlerde tek `short`, paket yoksa
+ * ya da seçim yoksa tek öğe `undefined` (baştan bir Short). Her zaman en az bir öğe döner.
+ */
+export function shortPicks(pkg: { short?: ShortPick; shorts?: ShortPick[] } | undefined): (ShortPick | undefined)[] {
+  if (pkg?.shorts?.length) return pkg.shorts;
+  return [pkg?.short];
+}
+
+/** Short dosya adı: ilki eskisi gibi `<id>.short.mp4` (Stüdyo ve indirme adı), sonrakiler `<id>.short-<n>.mp4`. */
+export function shortFileName(episodeId: string, index: number): string {
+  return index <= 1 ? `${episodeId}.short.mp4` : `${episodeId}.short-${index}.mp4`;
+}
 
 export interface ShortRange {
   scenes: string[];

@@ -21,7 +21,7 @@ const PKG = PackageOut.parse({
   chapters: [],
   tags: ["a"],
   hashtags: ["tarih", "#tek noloji", "#"],
-  short: { from: "s1", to: "s2", title: "Kısa" },
+  shorts: [{ from: "s1", to: "s2", title: "Kısa", hook: "Opens on the question and lands the answer" }],
 });
 
 describe("yayın paketi", () => {
@@ -32,7 +32,7 @@ describe("yayın paketi", () => {
     const c = await capture((d) => packager({ story, script, lang: "tr", durationSec: 600, sceneSec: { s1: 12.4 } }, d));
     expect(c.system).toContain("episode language (tr)");
     expect(c.system).toContain("keep names of real people, companies and products");
-    expect(c.system).toContain("the stretch to cut as a vertical Short");
+    expect(c.system).toContain("the 1-3 stretches to cut as vertical Shorts");
     expect(c.prompt).toContain("Working title: Çalışma başlığı\nLogline: Bir cümle\nHook: İlk 15 saniye\nLength: 10 min");
     // Süresi bilinen sahnede uzunluk yazılır; bilinmeyende yazılmaz.
     expect(c.prompt).toContain(`s1 (12 s): ${"x".repeat(280)}`);

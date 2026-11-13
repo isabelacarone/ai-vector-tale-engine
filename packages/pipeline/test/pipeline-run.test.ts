@@ -1015,7 +1015,7 @@ describe("timeline, render ve inceleme", () => {
     chapters: [{ scene: "s1", title: "Başlangıç" }],
     tags: ["microsoft", "bill gates"],
     hashtags: ["tarih", "#teknoloji"],
-    short: { from: "s1", to: "s1", title: " Gates'in Hamlesi " },
+    shorts: [{ from: "s1", to: "s1", title: " Gates'in Hamlesi ", hook: "Stands alone" }],
   };
 
   it("package: yayın paketi ve küçük resim videonun yanına yazılır; hikâye yoksa konu başlık sayılır", async () => {

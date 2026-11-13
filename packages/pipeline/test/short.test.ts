@@ -1,8 +1,23 @@
 import { Timeline } from "@ys/core";
 import { describe, expect, it } from "vitest";
-import { SHORT, shortRange, shortTimeline } from "../src/short.ts";
+import { SHORT, shortFileName, shortPicks, shortRange, shortTimeline } from "../src/short.ts";
 
 const S = 1000;
+
+describe("Short seçimleri ve dosya adları", () => {
+  it("yeni paket shorts'u, eski paket short'u, seçimsiz paket tek undefined verir", () => {
+    const a = { from: "s1", to: "s1", title: "A" };
+    const b = { from: "s2", to: "s2", title: "B" };
+    expect(shortPicks({ shorts: [a, b], short: a })).toEqual([a, b]);
+    expect(shortPicks({ short: a })).toEqual([a]);
+    expect(shortPicks({ shorts: [] })).toEqual([undefined]);
+    expect(shortPicks(undefined)).toEqual([undefined]);
+  });
+
+  it("ilk Short eski adıyla, sonrakiler numaralı", () => {
+    expect([shortFileName("e", 1), shortFileName("e", 0), shortFileName("e", 2), shortFileName("e", 3)]).toEqual(["e.short.mp4", "e.short.mp4", "e.short-2.mp4", "e.short-3.mp4"]);
+  });
+});
 
 describe("Short aralığı", () => {
   const ids = ["s1", "s2", "s3", "s4"];
