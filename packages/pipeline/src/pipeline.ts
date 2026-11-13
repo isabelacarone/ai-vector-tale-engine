@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { collectWriterClaims, freezeResearch, loadResearch, researchContext, researchCredits } from "./research.ts";
 import { collectVoiceAudit, type VoiceMeasure } from "./voice-audit.ts";
 import { loadPronunciationBook, pronunciationLanguage, pronunciationRulesFingerprint, pronunciationTerms, pronunciationTermsFingerprint } from "./pronunciation-settings.ts";
-import { PronunciationEntry, pronunciationTermKey, type PronunciationBook } from "@ys/core";
+import { PronunciationEntry, pronunciationTermKey, type ChannelProfile, type PronunciationBook } from "@ys/core";
 import { measureVoiceAudio } from "@ys/video/voice-audit";
 import { shotIntentText } from "@ys/core";
 import type { auditRenderedVideo } from "@ys/video/audit";
@@ -316,6 +316,8 @@ export interface PipelineDeps {
   analyzeRender?: typeof auditRenderedVideo;
   /** Konuşma denetiminde yalnız medya çözümleme sınırı değiştirilebilir. */
   analyzeVoice?: VoiceMeasure;
+  /** Channel profile (settings/channel.json): persona and audience reach the story and script agents. */
+  channel?: Pick<ChannelProfile, "audience" | "persona">;
 }
 
 export interface RunEpisodeOptions {
@@ -623,7 +625,15 @@ export class EpisodePipeline {
 
   private brief(state: EpisodeState): EpisodeBrief {
     const { topic, lang, targetSec, styleHint } = state.input;
-    return { topic, lang, targetSec, styleHint };
+    const channel = this.deps.channel;
+    return {
+      topic,
+      lang,
+      targetSec,
+      styleHint,
+      ...(channel?.audience ? { audience: channel.audience } : {}),
+      ...(channel?.persona ? { persona: channel.persona } : {}),
+    };
   }
 
   private async agent<T>(state: EpisodeState, stage: Stage, call: Promise<AgentResult<T>>): Promise<T> {

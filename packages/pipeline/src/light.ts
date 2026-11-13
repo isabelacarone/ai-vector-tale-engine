@@ -4,6 +4,7 @@ export * from "./estimate.ts";
 export * from "./state.ts";
 export * from "./lessons.ts";
 export * from "./settings.ts";
+export * from "./channel.ts";
 export * from "./library.ts";
 export * from "./samples.ts";
 export * from "./custom-styles.ts";

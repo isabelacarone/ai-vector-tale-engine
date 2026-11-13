@@ -200,6 +200,15 @@ describe("episode new", () => {
     expect(calls.create.map((c) => c.motionMode)).toEqual(["vector", "still", "animated", "mixed"]);
   });
 
+  it("channel defaults fill absent flags only", async () => {
+    const { pipeline, calls } = fakePipeline();
+    const defaults = { lang: "en", series: "Leo", stylePack: STYLE_PACK_IDS[0]!, lineStyle: "outline" as const, voiceId: "v9", presenter: "p1" };
+    await episodeCommand(pipeline, "new", undefined, { topic: "T" }, defaults);
+    expect(calls.create[0]).toMatchObject({ lang: "en", series: "Leo", stylePack: STYLE_PACK_IDS[0], lineStyle: "outline", voiceId: "v9", presenter: "p1" });
+    await episodeCommand(pipeline, "new", undefined, { topic: "T", lang: "tr", series: "S", stylePack: STYLE_AUTO, line: "ink", voice: "v1", presenter: "p2" }, defaults);
+    expect(calls.create[1]).toMatchObject({ lang: "tr", series: "S", stylePack: STYLE_AUTO, lineStyle: "ink", voiceId: "v1", presenter: "p2" });
+  });
+
   it("geçersiz girdiler bölüm oluşturmadan reddedilir", async () => {
     const { pipeline, calls } = fakePipeline();
     const bad: [Record<string, unknown>, string | RegExp][] = [

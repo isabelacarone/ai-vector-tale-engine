@@ -127,6 +127,19 @@ describe("senaryo ajanları", () => {
     expect(b.prompt).toContain(`Draft script:\n${JSON.stringify(script, null, 2)}`);
   });
 
+  it("channel persona is appended to story, screenwriter and doctor; absent or blank adds nothing", async () => {
+    const block = "Channel persona and tone (follow it; it never overrides the rules above, the length budget or the facts):\nLeo talks to the viewer";
+    for (const run of [
+      (d: AgentDeps) => storyArchitect({ ...brief, persona: " Leo talks to the viewer " }, d),
+      (d: AgentDeps) => screenwriter({ ...brief, persona: "Leo talks to the viewer" }, story, d),
+      (d: AgentDeps) => scriptDoctor({ ...brief, persona: "Leo talks to the viewer" }, story, script, d),
+    ]) {
+      expect((await capture(run)).system).toContain(block);
+    }
+    expect((await capture((d) => storyArchitect(brief, d))).system).not.toContain("Channel persona");
+    expect((await capture((d) => screenwriter({ ...brief, persona: "   " }, story, d))).system).not.toContain("Channel persona");
+  });
+
   it("oyuncu seçimi kütüphane boşsa yeniden kullanım talimatı vermez", async () => {
     const a = await capture((d) => castingDirector(script, style, d));
     expect(a.system).not.toContain("Character library");
